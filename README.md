@@ -1,207 +1,236 @@
-# Consilium — Multi-AI Consensus System
+# 🧠 Consilium — The AI That Debates Itself
 
-## Architecture Diagram
+> *Four AI systems argue. One best answer wins.*
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         BROWSER / CLIENT                                 │
-│                                                                          │
-│  ┌──────────────┐  ┌──────────────────────────────────────────────────┐ │
-│  │   Sidebar    │  │              Chat Interface                       │ │
-│  │  (History)   │  │  UserMessage → LoadingConsensus → ConsensusResult │ │
-│  └──────────────┘  └──────────────────────────────────────────────────┘ │
-└─────────────────────────────────┬───────────────────────────────────────┘
-                                  │ POST /api/consensus
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    NEXT.JS SERVER (Vercel Edge)                          │
-│                                                                          │
-│  middleware.ts → Auth check → Rate limit check                           │
-│                                                                          │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                    consensus-engine.ts                             │   │
-│  │                                                                    │   │
-│  │  Phase 1: Parallel Fetch (Promise.all)                            │   │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │   │
-│  │  │ OpenAI   │ │ Gemini   │ │Perplexity│ │OpenRouter│           │   │
-│  │  │ GPT-4o   │ │1.5-flash │ │  Sonar   │ │  Claude  │           │   │
-│  │  │ (15s TO) │ │ (15s TO) │ │ (15s TO) │ │ (15s TO) │           │   │
-│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘           │   │
-│  │       │             │             │              │                │   │
-│  │  Phase 2: Cross-Review (4×3=12 critiques)                        │   │
-│  │  Each AI reviews other 3 → vote: agree/partial/disagree          │   │
-│  │                                                                    │   │
-│  │  Phase 3: Refinement (if confidence < 75%)                        │   │
-│  │  Disagreed AIs revise or defend positions                         │   │
-│  │                                                                    │   │
-│  │  Synthesis: OpenAI synthesizes final answer                       │   │
-│  │                                                                    │   │
-│  │  Score = Σ(vote_weights) / max_points × 100                      │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────┬──────────────────────────────────────┘
-                                   │
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         SUPABASE                                         │
-│                                                                          │
-│  PostgreSQL:                                                             │
-│  profiles → conversations → messages                                     │
-│                          → ai_responses (×4 per query)                  │
-│                          → ai_critiques (×12 per query)                 │
-│                          → consensus_results (×1 per query)             │
-│  usage_tracking (per provider, per day)                                  │
-│                                                                          │
-│  Auth: Google OAuth → JWT → RLS policies                                │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+---
 
-## Consensus Scoring Algorithm
+## What is Consilium?
+
+When you ask one AI a question, you get one opinion. It might be wrong. You have no way to know.
+
+**Consilium fixes this.**
+
+It sends your question to **four different AI systems at the same time**, makes them **debate and challenge each other's answers**, and then picks the **most logically correct response** — not the most popular one.
+
+Think of it like asking four experts the same question, locking them in a room to argue, and then having a judge pick the strongest argument.
+
+---
+
+## Why Does This Matter?
+
+| Old Way | Consilium Way |
+|---|---|
+| Ask 1 AI → get 1 answer | Ask 4 AIs → get 4 answers |
+| No way to verify if it's correct | AIs cross-examine each other |
+| Popular answer wins | Best-reasoned answer wins |
+| You trust blindly | You see the full debate |
+
+---
+
+## How It Works — Simple Version
 
 ```
-Providers: [OpenAI, Gemini, Perplexity, OpenRouter] (n = 4)
-
-Vote weights:
-  agree    = 1.0
-  partial  = 0.5
-  disagree = 0.0
-
-Agreement matrix: n × (n-1) = 12 review slots
-
-Max possible points = n × (n-1) = 12
-
-Confidence score = Σ(vote_weight_i) / 12 × 100
-
-Labels:
-  100%      → unanimous
-  75–99%    → high
-  50–74%    → moderate
-  < 50%     → low (triggers refinement)
+You type a question
+        ↓
+┌───────────────────────────────────────┐
+│  4 AIs answer independently           │
+│  OpenAI • Gemini • Perplexity • Claude│
+└───────────────────────────────────────┘
+        ↓
+┌───────────────────────────────────────┐
+│  Each AI critiques the other 3        │
+│  "Your reasoning has a flaw because…" │
+└───────────────────────────────────────┘
+        ↓
+┌───────────────────────────────────────┐
+│  Each AI revises or defends its answer│
+└───────────────────────────────────────┘
+        ↓
+┌───────────────────────────────────────┐
+│  A judge AI picks the best reasoning  │
+│  (not the most popular answer)        │
+└───────────────────────────────────────┘
+        ↓
+  You get the most trustworthy answer
+  + full debate transcript
+  + confidence score
 ```
 
-## Folder Structure
+---
+
+## Features
+
+-  **4 AI engines in one** — OpenAI, Google Gemini, Perplexity, OpenRouter
+-  **Real adversarial debate** — AIs genuinely challenge each other's logic
+-  **Quality over popularity** — minority answer wins if its reasoning is stronger
+-  **Confidence scoring** — see how certain the system is about the answer
+-  **Full transparency** — read every AI's individual answer and critique
+-  **Chat history** — all your conversations saved and searchable
+-  **Secure login** — sign in with your Google account
+-  **Fast** — all 4 AIs run simultaneously, not one after another
+
+---
+
+## Live Demo
+
+ **[Try it here →](https://consilium-chatbot.vercel.app)**
+
+Sign in with Google — no password needed.
+
+---
+
+## What It Looks Like
 
 ```
-multi-ai-consensus/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── consensus/route.ts      # Main pipeline endpoint
-│   │   │   └── history/route.ts        # Conversation CRUD
-│   │   ├── auth/callback/route.ts      # OAuth callback
-│   │   ├── chat/page.tsx               # Main chat UI
-│   │   ├── login/page.tsx              # Google OAuth login
-│   │   ├── layout.tsx                  # Root layout
-│   │   ├── page.tsx                    # Root redirect
-│   │   └── globals.css
-│   ├── components/
-│   │   ├── chat/
-│   │   │   ├── ChatInput.tsx
-│   │   │   └── Sidebar.tsx
-│   │   └── consensus/
-│   │       ├── ConsensusResult.tsx     # Main result display
-│   │       └── LoadingConsensus.tsx    # Loading skeleton
-│   ├── lib/
-│   │   ├── ai/
-│   │   │   ├── providers.ts            # 4 AI provider clients
-│   │   │   └── consensus-engine.ts     # 3-phase orchestration
-│   │   ├── db/
-│   │   │   └── supabase.ts             # Supabase clients
-│   │   └── utils/
-│   │       └── rate-limit.ts
-│   ├── types/index.ts                  # TypeScript types
-│   └── middleware.ts                   # Auth + protection
-├── supabase/migrations/
-│   └── 001_schema.sql                  # Full DB schema
-├── .env.example
-├── next.config.js
-├── tailwind.config.js
-└── package.json
+┌─────────────────────────────────────────────────────┐
+│  💬 You: Is the statement "a teacher is rubbing     │
+│          the board" true or false?                  │
+├─────────────────────────────────────────────────────┤
+│  🤖 OpenAI:     True  (confidence: High)            │
+│  🤖 Gemini:     True  (confidence: High)            │
+│  🤖 Perplexity: True  (confidence: Medium)          │
+│  🤖 Claude:     ⚠️ Cannot be determined —           │
+│                 a single statement without context   │
+│                 cannot be verified as true or false  │
+├─────────────────────────────────────────────────────┤
+│   FINAL ANSWER: Cannot be determined              │
+│   Selected because: Claude's reasoning was        │
+│   logically superior despite being outvoted 3-1   │
+└─────────────────────────────────────────────────────┘
 ```
 
-## Deployment Guide
+---
 
-### 1. Supabase Setup
+## Cost
+
+Each question costs roughly **$0.001 to $0.003** (less than a fraction of a cent).
+
+For context: you could ask **1,000 questions for about $1-3**.
+
+---
+
+## For Developers — Running Locally
+
+### What You Need First
+
+- [Node.js 18+](https://nodejs.org) installed
+- A [Supabase](https://supabase.com) account (free)
+- API keys for the AI providers (see table below)
+
+### Step 1 — Get the code
 
 ```bash
-# Install Supabase CLI
-npm install -g supabase
-
-# Init and link project
-supabase init
-supabase login
-supabase link --project-ref YOUR_PROJECT_ID
-
-# Run migrations
-supabase db push
-
-# Enable Google OAuth in Supabase Dashboard:
-# Authentication → Providers → Google
-# Add your Google OAuth credentials from Google Cloud Console
-# Set callback URL: https://YOUR_PROJECT.supabase.co/auth/v1/callback
+git clone https://github.com/Lokesh4VIT/consilium-chatbot.git
+cd consilium-chatbot
+npm install
 ```
 
-### 2. Environment Variables
+### Step 2 — Set up your secrets
 
 ```bash
 cp .env.example .env.local
-# Fill in all values in .env.local
 ```
 
-### 3. Local Development
+Open `.env.local` and fill in your API keys:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=        ← from supabase.com dashboard
+NEXT_PUBLIC_SUPABASE_ANON_KEY=   ← from supabase.com dashboard
+SUPABASE_SERVICE_ROLE_KEY=       ← from supabase.com dashboard
+OPENAI_API_KEY=                  ← from platform.openai.com
+GOOGLE_GEMINI_API_KEY=           ← from aistudio.google.com
+PERPLEXITY_API_KEY=              ← from perplexity.ai/settings/api
+OPENROUTER_API_KEY=              ← from openrouter.ai/keys
+```
+
+### Step 3 — Run it
 
 ```bash
-npm install
 npm run dev
-# Visit http://localhost:3000
 ```
 
-### 4. Vercel Deployment
+Open `http://localhost:3000` in your browser.
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
+---
 
-# Deploy
-vercel --prod
+## API Keys — Where to Get Them
 
-# Add environment variables in Vercel Dashboard:
-# Settings → Environment Variables
-# Add all variables from .env.example
+| AI Provider | Get Key Here | Free Tier? |
+|---|---|---|
+| OpenAI (GPT-4) | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | No — pay as you go |
+| Google Gemini | [aistudio.google.com](https://aistudio.google.com/app/apikey) | ✅ Yes |
+| Perplexity | [perplexity.ai/settings/api](https://www.perplexity.ai/settings/api) | No — pay as you go |
+| OpenRouter | [openrouter.ai/keys](https://openrouter.ai/keys) | ✅ Free credits |
+| Supabase | [supabase.com/dashboard](https://supabase.com/dashboard) | ✅ Yes |
+
+---
+
+## Deploying to Vercel
+
+1. Push code to GitHub
+2. Go to [vercel.com](https://vercel.com) → New Project → Import your repo
+3. Add all your environment variables in Vercel dashboard
+4. Click Deploy
+
+After deploying, update your Supabase settings:
+- **Site URL** → `https://your-app.vercel.app`
+- **Redirect URL** → `https://your-app.vercel.app/auth/callback`
+
+---
+
+## Security
+
+-  All AI API keys are **server-side only** — never exposed to the browser
+-  Login via Google OAuth — we never store your password
+-  Database rules ensure **you can only see your own conversations**
+-  Rate limiting prevents abuse — 20 queries/day on free plan
+-  All inputs are sanitized to prevent prompt injection attacks
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 15, React, Tailwind CSS |
+| Backend | Next.js API Routes (TypeScript) |
+| Database | PostgreSQL via Supabase |
+| Authentication | Google OAuth via Supabase Auth |
+| AI Providers | OpenAI, Gemini, Perplexity, OpenRouter |
+| Deployment | Vercel |
+
+---
+
+## Project Structure
+
+```
+consilium-chatbot/
+├── src/
+│   ├── app/
+│   │   ├── api/consensus/     ← The debate engine lives here
+│   │   ├── chat/              ← The chat interface
+│   │   └── login/             ← Google login page
+│   ├── components/            ← UI building blocks
+│   ├── lib/
+│   │   ├── ai/                ← All AI logic
+│   │   └── db/                ← Database connection
+│   └── middleware.ts          ← Security guard for all routes
+├── supabase/migrations/       ← Database schema
+└── .env.example               ← Template for your secrets
 ```
 
-### 5. Post-deployment
+---
 
-- Update Supabase Auth → URL Configuration:
-  - Site URL: `https://your-app.vercel.app`
-  - Redirect URLs: `https://your-app.vercel.app/auth/callback`
+## Questions or Issues?
 
-- Update Google OAuth console:
-  - Authorized redirect URI: `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
+Open an [issue on GitHub](https://github.com/Lokesh4VIT/consilium-chatbot/issues) and describe what you're seeing.
 
-## API Keys Required
+---
 
-| Provider    | Where to get                                  | Cost          |
-|-------------|-----------------------------------------------|---------------|
-| OpenAI      | https://platform.openai.com/api-keys          | ~$0.15/1M in  |
-| Gemini      | https://aistudio.google.com/app/apikey        | Free tier     |
-| Perplexity  | https://www.perplexity.ai/settings/api        | ~$0.20/1M     |
-| OpenRouter  | https://openrouter.ai/keys                    | ~$0.025/1M    |
-| Supabase    | https://supabase.com/dashboard                | Free tier     |
+<div align="center">
 
-## Estimated Cost per Query
+Built with curiosity. Powered by disagreement.
 
-Each query = 3 phases × 4 providers:
-- Phase 1 (initial): ~600 tokens × 4 = ~2,400 tokens
-- Phase 2 (critiques): ~800 tokens × 4 = ~3,200 tokens  
-- Phase 3 (refinement if needed): ~1,000 tokens × 4 = ~4,000 tokens
-- Synthesis: ~1,500 tokens
+**[⭐ Star this repo](https://github.com/Lokesh4VIT/consilium-chatbot)** if you found it useful.
 
-**Total: ~7,000-11,000 tokens ≈ $0.001–$0.003 per query**
-
-## Security Notes
-
-- All API keys are server-side only (no `NEXT_PUBLIC_` prefix)
-- Supabase RLS ensures users only see their own data
-- Input sanitized to prevent prompt injection
-- Rate limiting: 20 queries/day (free), 200/day (pro)
-- Auth via Supabase JWT — validated server-side on every request
+</div>
