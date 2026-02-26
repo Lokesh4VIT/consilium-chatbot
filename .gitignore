@@ -1,0 +1,15 @@
+﻿# Dependencies
+node_modules/
+
+# Environment variables — NEVER upload these
+.env.local
+.env
+.env*.local
+
+# Next.js build output
+.next/
+out/
+
+# Misc
+.DS_Store
+*.log
